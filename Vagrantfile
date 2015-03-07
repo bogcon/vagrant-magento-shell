@@ -26,7 +26,7 @@ ADMIN_LASTNAME="Doe"
 ADMIN_EMAIL="admin@example.com"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="demopassword123" # must have at least 7 chars
-
+DATABASE_NAME="magento_#{MAGENTO_VERSION}"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "ubuntu/trusty#{ARCH}"
@@ -36,5 +36,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
      vb.customize ["modifyvm", :id, "--memory", "1024", "--name", "MagentoDev_#{HOST_PORT}"]
   end
-  config.vm.provision "shell", path: "bootstrap.sh", args: "-p #{MYSQL_ROOT_PASSWORD} -w #{MAGENTO_VERSION} -s #{STORE_URL} -f #{ADMIN_FIRSTNAME} -l #{ADMIN_LASTNAME} -e #{ADMIN_EMAIL} -a #{ADMIN_USERNAME} -b #{ADMIN_PASSWORD} -v #{VIRTUAL_HOSTNAME}"
+  config.vm.provision "shell", path: "bootstrap.sh", args: "-p #{MYSQL_ROOT_PASSWORD} -w #{MAGENTO_VERSION} -s #{STORE_URL} -f #{ADMIN_FIRSTNAME} -l #{ADMIN_LASTNAME} -e #{ADMIN_EMAIL} -a #{ADMIN_USERNAME} -b #{ADMIN_PASSWORD} -v #{VIRTUAL_HOSTNAME} -d #{DATABASE_NAME}"
 end

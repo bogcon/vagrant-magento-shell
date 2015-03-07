@@ -12,7 +12,7 @@
 
 
 # read params
-while getopts ":p:s:v:w:f:l:a:e:b:h" opt; do
+while getopts ":p:s:v:w:f:l:a:e:b:d:h" opt; do
   case $opt in
     p) MYSQL_PWD="$OPTARG"
     ;;
@@ -37,6 +37,8 @@ while getopts ":p:s:v:w:f:l:a:e:b:h" opt; do
     ;;
     b) ADMIN_PWD="$OPTARG"
     ;;
+    d) MYSQL_DB="$OPTARG"
+    ;;
     h)
         bold=`tput bold`
         normal=`tput sgr0`
@@ -55,6 +57,7 @@ ${bold}SYNOPSYS${normal}
                           [-w <mage_version>] [-f <mage_admin_firstname>] 
                           [-l <mage_admin_lastname>] [-e <mage_admin_email>]
                           [-a <mage_admin_username>] [-b <mage_admin_password>]
+                          [-d <database_name>]
                           [-h]
 
 ${bold}OPTIONS${normal}
@@ -69,6 +72,7 @@ ${bold}OPTIONS${normal}
     -e    Magento admin 's email; default is "admin@example.com".
     -a    Magento admin 's username; default is "admin".
     -b    Magento admin 's password; default is "demopassword123".
+    -d    MySQL database name. Default is "magento_{version}"
     -h    Prints this help.
 
 ${bold}AUTHOR${normal}
@@ -129,6 +133,9 @@ then
 else
     SAMPLE_DATA_VERSION="1.9.1.0"	
 fi
+if [ "$MYSQL_DB" = "" ]; then
+    MYSQL_DB="magento_$MAGENTO_VERSION"
+fi
 
 # check params
 MAGENTO_VERSIONS=( "1.7.0.2" "1.8.1.0" "1.9.1.0" )
@@ -151,20 +158,19 @@ if [ $ADMIN_PWD_LEN -lt 7 ]; then
 fi
 
 # init other variables used in this script
-MYSQL_DB="magento_$MAGENTO_VERSION"
 MYSQL_HOST="localhost"
 MYSQL_USER="root"
 
-echo "MySQL root pwd: $MYSQL_PWD"
-echo "Magento version: $MAGENTO_VERSION"
-echo "Magento sample data version: $SAMPLE_DATA_VERSION"
-echo "Magento db: $MYSQL_DB"
-echo "Magento store url: $STORE_URL"
-echo "Magento backend admin firstname: $ADMIN_FIRSTNAME"
-echo "Magento backend admin lastname: $ADMIN_LASTNAME"
-echo "Magento backend admin email: $ADMIN_EMAIL"
-echo "Magento backend admin username: $ADMIN_USERNAME"
-echo "Magento backend admin pwd: $ADMIN_PWD"
+echo "[INFO] MySQL root pwd: $MYSQL_PWD"
+echo "[INFO] Magento version: $MAGENTO_VERSION"
+echo "[INFO] Magento sample data version: $SAMPLE_DATA_VERSION"
+echo "[INFO] Magento db: $MYSQL_DB"
+echo "[INFO] Magento store url: $STORE_URL"
+echo "[INFO] Magento backend admin firstname: $ADMIN_FIRSTNAME"
+echo "[INFO] Magento backend admin lastname: $ADMIN_LASTNAME"
+echo "[INFO] Magento backend admin email: $ADMIN_EMAIL"
+echo "[INFO] Magento backend admin username: $ADMIN_USERNAME"
+echo "[INFO] Magento backend admin pwd: $ADMIN_PWD"
 
 # add repo for libapache2-mod-fastcgi
 echo -e "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -cs) restricted multiverse\ndeb-src http://archive.ubuntu.com/ubuntu $(lsb_release -cs) restricted multiverse" | sudo tee -a /etc/apt/sources.list > /dev/null
@@ -284,7 +290,7 @@ fi
 # download magento and extract files
 cd $WWW_DIR
 if [ ! -f app/Mage.php ]; then
-    echo "Downloading magento data..."
+    echo "[INFO] Downloading magento data..."
     if [ ! -f magento-$MAGENTO_VERSION.tar.gz ]; then 
         wget "http://www.magentocommerce.com/downloads/assets/$MAGENTO_VERSION/magento-$MAGENTO_VERSION.tar.gz"
     fi
@@ -313,20 +319,20 @@ if [ ! -f app/Mage.php ]; then
     fi
 
     # create magento db and import sample data into it
-    echo "Creating magento db..."
+    echo "[INFO] Creating magento db..."
     mysql -u $MYSQL_USER -h $MYSQL_HOST -p$MYSQL_PWD -Bse "DROP DATABASE IF EXISTS \`$MYSQL_DB\`; CREATE DATABASE \`$MYSQL_DB\` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;"
-    echo "Importing magento sample data..."
+    echo "[INFO] Importing magento sample data..."
     mysql -u $MYSQL_USER -h $MYSQL_HOST -p$MYSQL_PWD $MYSQL_DB < data.sql
 
     # remove unnecessary files
     rm -rf magento/ magento-sample-data-$SAMPLE_DATA_VERSION/  data.sql magento-$MAGENTO_VERSION.tar.gz magento-sample-data-$SAMPLE_DATA_VERSION.tar.gz
 else
-    echo "Magento already downloaded."
+    echo "[INFO] Magento already downloaded."
 fi
 
 # install magento
 if [ ! -f app/etc/local.xml ]; then
-    echo "Installing magento..."
+    echo "[INFO] Installing magento..."
     chmod -R o+w media var
     chmod o+w var var/.htaccess app/etc
     php -f install.php -- --license_agreement_accepted yes \
@@ -343,6 +349,6 @@ if [ ! -f app/etc/local.xml ]; then
     echo ">>>>>   Magento frontend: $STORE_URL"
     echo ">>>>>   Magento backend: ${STORE_URL}index.php/admin  user: $ADMIN_USERNAME, pass: $ADMIN_PWD"
 else
-    echo "Magento already installed."
+    echo "[INFO] Magento already installed."
     echo ">>>>>   Done."
 fi

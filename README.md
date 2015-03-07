@@ -53,7 +53,8 @@ Open `Vagrantfile` and see that there are a couple of things that can be configu
 | ADMIN_LASTNAME      | Mage backend admin 's lastname                                       | Doe                      |
 | ADMIN_EMAIL         | Mage backend admin 's email                                          | admin@example.com        |
 | ADMIN_USERNAME      | Mage backend admin 's username                                       | admin                    |
-| ADMIN_PASSWORD      | Mage backend admin 's password                                       | demopassword123          |  
+| ADMIN_PASSWORD      | Mage backend admin 's password                                       | demopassword123          |
+| DATABASE_NAME       | MySQL database name                                                  | magento_1.9.1.0          |  
 
 **Example** of installing a Magento 1.7.0.2 on Ubuntu 32 bit that will be available under http://magento.dev url:
 
@@ -68,6 +69,7 @@ Open `Vagrantfile` and see that there are a couple of things that can be configu
     ADMIN_EMAIL="bc@example.com"
     ADMIN_USERNAME="admin"
     ADMIN_PASSWORD="123pass123" # must have at least 7 chars
+    DATABASE_NAME="custom_project_db"
 
 Also make sure that you add the following line to your `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file so that `magento.dev` is mapped to machine 's address `192.168.33.10`.
 
