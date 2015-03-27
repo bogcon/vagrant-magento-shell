@@ -66,7 +66,7 @@ ${bold}OPTIONS${normal}
     -s    Magento 's url; default is "http://magento.dev/".
     -w    Magento CE version to install
           Available options are "1.7.0.2", "1.8.1.0", "1.9.1.0"
-          Default is "1.7.0.2".
+          Default is "1.9.1.0".
     -f    Magento admin 's firstname; default is "John".
     -l    Magento admin 's lastname; default is "Doe".
     -e    Magento admin 's email; default is "admin@example.com".
@@ -110,7 +110,7 @@ if [ "$VIRTUAL_HOSTNAME" = "" ]; then
     VIRTUAL_HOSTNAME="magento.dev"
 fi
 if [ "$MAGENTO_VERSION" = "" ]; then
-    MAGENTO_VERSION="1.8.1.0"
+    MAGENTO_VERSION="1.9.1.0"
 fi
 if [ "$ADMIN_FIRSTNAME" = "" ]; then
     ADMIN_FIRSTNAME="John"
