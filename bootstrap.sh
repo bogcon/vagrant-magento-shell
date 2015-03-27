@@ -53,8 +53,8 @@ ${bold}DESCRIPTION${normal}
         nice shell renderer
 
 ${bold}SYNOPSYS${normal}
-    /path/to/bootstrap.sh [-p <pass>] [-v <hostname>] [-s <mage_store_url>] 
-                          [-w <mage_version>] [-f <mage_admin_firstname>] 
+    /path/to/bootstrap.sh [-p <pass>] [-v <hostname>] [-s <mage_store_url>]
+                          [-w <mage_version>] [-f <mage_admin_firstname>]
                           [-l <mage_admin_lastname>] [-e <mage_admin_email>]
                           [-a <mage_admin_username>] [-b <mage_admin_password>]
                           [-d <database_name>]
@@ -352,3 +352,4 @@ else
     echo "[INFO] Magento already installed."
     echo ">>>>>   Done."
 fi
+
