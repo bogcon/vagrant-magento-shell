@@ -36,5 +36,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider :virtualbox do |vb|
      vb.customize ["modifyvm", :id, "--memory", "1024", "--name", "MagentoDev_#{HOST_PORT}"]
   end
+  config.vm.synced_folder ".", "/vagrant", owner: "www-data", group: "www-data"
   config.vm.provision "shell", path: "bootstrap.sh", args: "-p #{MYSQL_ROOT_PASSWORD} -w #{MAGENTO_VERSION} -s #{STORE_URL} -f #{ADMIN_FIRSTNAME} -l #{ADMIN_LASTNAME} -e #{ADMIN_EMAIL} -a #{ADMIN_USERNAME} -b #{ADMIN_PASSWORD} -v #{VIRTUAL_HOSTNAME} -d #{DATABASE_NAME}"
 end
