@@ -10,32 +10,43 @@
 ## @link      Github https://github.com/bogcon/vagrant-magento-shell
 ####
 
+require 'yaml'
+require 'uri'
+
+#check/install needed plugins
+requiredPlugins = { 'vagrant-hostsupdater' => '>=1.0.1' }
+installedPlugins = false
+requiredPlugins.each do |plugin, version|
+  unless Vagrant.has_plugin?(plugin, version)
+    system "vagrant plugin install #{plugin}"
+    installedPlugins = true
+  end
+end
+if installedPlugins == true
+  puts 'Please run `vagrant up` again.'
+  exit 1
+end
+
+# read Vagrant configuration
+if not File.exist?(File.join(File.dirname(__FILE__), 'Vagrant.config.yml'))
+    puts "Please provide a 'Vagrant.config.yml' file. Please read documentation for more information."
+    exit 1
+end
+vagrantConfig = YAML.load_file File.join(File.dirname(__FILE__), 'Vagrant.config.yml')
+storeUrl = URI.parse(vagrantConfig['magento_installation']['store_url'])
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
-
-# Change the following variables according to your needs
-ARCH=64 # can be 32 | 64 (install ubuntu 32bit | 64bit)
-HOST_PORT=8181
-VIRTUAL_HOSTNAME="localhost"
-STORE_URL="http://localhost:#{HOST_PORT}/"
-MYSQL_ROOT_PASSWORD="123"
-MAGENTO_VERSION="1.9.1.0" # can be 1.7.0.2 | 1.8.1.0 | 1.9.1.0
-ADMIN_FIRSTNAME="John"
-ADMIN_LASTNAME="Doe"
-ADMIN_EMAIL="admin@example.com"
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="demopassword123" # must have at least 7 chars
-DATABASE_NAME="magento_#{MAGENTO_VERSION}"
-
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "ubuntu/trusty#{ARCH}"
-  config.vm.hostname = "magento-dev"
-  config.vm.network :forwarded_port, guest: 80, host: HOST_PORT
-  config.vm.network :private_network, ip: "192.168.33.10"
+  config.vm.box = "ubuntu/trusty#{vagrantConfig['vm']['ubuntu_arch']}"
+  #config.vm.hostname = storeUrl.host
+  config.vm.network :private_network, ip: vagrantConfig['ip']
+  config.hostsupdater.aliases = [ storeUrl.host ]
   config.vm.provider :virtualbox do |vb|
-     vb.customize ["modifyvm", :id, "--memory", "1024", "--name", "MagentoDev_#{HOST_PORT}"]
+     vb.customize ["modifyvm", :id, "--memory", "#{vagrantConfig['vm']['memory']}", "--name", "#{storeUrl.host}"]
   end
   config.vm.synced_folder ".", "/vagrant", owner: "www-data", group: "www-data"
-  config.vm.provision "shell", path: "bootstrap.sh", args: "-p #{MYSQL_ROOT_PASSWORD} -w #{MAGENTO_VERSION} -s #{STORE_URL} -f #{ADMIN_FIRSTNAME} -l #{ADMIN_LASTNAME} -e #{ADMIN_EMAIL} -a #{ADMIN_USERNAME} -b #{ADMIN_PASSWORD} -v #{VIRTUAL_HOSTNAME} -d #{DATABASE_NAME}"
+  config.vm.provision "shell", path: "bootstrap.sh", args: "-p #{vagrantConfig['mysql']['pass']} -w #{vagrantConfig['magento_installation']['version']} -s #{vagrantConfig['magento_installation']['store_url']} -f #{vagrantConfig['magento_installation']['admin_firstname']} -l #{vagrantConfig['magento_installation']['admin_lastname']} -e #{vagrantConfig['magento_installation']['admin_email']} -a #{vagrantConfig['magento_installation']['admin_username']} -b #{vagrantConfig['magento_installation']['admin_pass']} -v #{storeUrl.host} -d #{vagrantConfig['mysql']['db']} -u #{vagrantConfig['mysql']['user']} -m #{vagrantConfig['magento_account']['mageid']} -t #{vagrantConfig['magento_account']['token']}"
 end
+

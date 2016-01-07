@@ -12,7 +12,7 @@
 
 
 # read params
-while getopts ":p:s:v:w:f:l:a:e:b:d:h" opt; do
+while getopts ":p:s:v:w:f:l:a:e:b:d:h:u:m:t:" opt; do
   case $opt in
     p) MYSQL_PWD="$OPTARG"
     ;;
@@ -39,6 +39,12 @@ while getopts ":p:s:v:w:f:l:a:e:b:d:h" opt; do
     ;;
     d) MYSQL_DB="$OPTARG"
     ;;
+    u) MYSQL_USER="$OPTARG"
+    ;;
+    m) MAGEID="$OPTARG"
+    ;;
+    t) MAGETOKEN="$OPTARG";
+    ;;
     h)
         bold=`tput bold`
         normal=`tput sgr0`
@@ -48,38 +54,40 @@ ${bold}DESCRIPTION${normal}
     Features:
         Apache + PHP-FPM
         MySQL + phpMyAdmin
-        Magento CE (1.7.0.2 | 1.8.1.0 | 1.9.1.0) + sample data
+        Magento CE 1.9.2.2 + sample data
         git, vim, curl, different usefull php extensions
         nice shell renderer
 
 ${bold}SYNOPSYS${normal}
-    /path/to/bootstrap.sh [-p <pass>] [-v <hostname>] [-s <mage_store_url>]
+    /path/to/bootstrap.sh [-v <hostname>] [-s <mage_store_url>]
                           [-w <mage_version>] [-f <mage_admin_firstname>]
                           [-l <mage_admin_lastname>] [-e <mage_admin_email>]
                           [-a <mage_admin_username>] [-b <mage_admin_password>]
-                          [-d <database_name>]
+                          [-d <database_name>] [-u <db_user>] [-p <db_pass>]
+                          -m <mageid> -t <token>
                           [-h]
 
 ${bold}OPTIONS${normal}
-    -p    MySQL 's root password; default is "123".
+    -p    MySQL 's user password; default is "123".
+    -u    MySQL 's user; default is "root".
     -v    Apache virtual server name; default is "magento.dev".
     -s    Magento 's url; default is "http://magento.dev/".
-    -w    Magento CE version to install
-          Available options are "1.7.0.2", "1.8.1.0", "1.9.1.0"
-          Default is "1.9.1.0".
+    -w    Magento CE version to install. Default is "1.9.2.2".
     -f    Magento admin 's firstname; default is "John".
     -l    Magento admin 's lastname; default is "Doe".
     -e    Magento admin 's email; default is "admin@example.com".
     -a    Magento admin 's username; default is "admin".
     -b    Magento admin 's password; default is "demopassword123".
     -d    MySQL database name. Default is "magento_{version}"
+    -m    Magento ID. Required. See http://magento.stackexchange.com/a/58031
+    -t    Magento token. Required. See http://magento.stackexchange.com/a/58031
     -h    Prints this help.
 
 ${bold}AUTHOR${normal}
     Written by Bogdan Constantinescu
 
 ${bold}LICENSE${normal}
-    Copyright (c) 2015, Bogdan Constantinescu <bog_con@yahoo.com>
+    Copyright (c) 2015-2016, Bogdan Constantinescu <bog_con@yahoo.com>
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -110,7 +118,7 @@ if [ "$VIRTUAL_HOSTNAME" = "" ]; then
     VIRTUAL_HOSTNAME="magento.dev"
 fi
 if [ "$MAGENTO_VERSION" = "" ]; then
-    MAGENTO_VERSION="1.9.1.0"
+    MAGENTO_VERSION="1.9.2.2"
 fi
 if [ "$ADMIN_FIRSTNAME" = "" ]; then
     ADMIN_FIRSTNAME="John"
@@ -127,28 +135,39 @@ fi
 if [ "$ADMIN_PWD" = "" ]; then
     ADMIN_PWD="demopassword123"
 fi
-if [ "$MAGENTO_VERSION" = "1.7.0.2" ] || [ "$MAGENTO_VERSION" = "1.8.1.0" ]
-then
-    SAMPLE_DATA_VERSION="1.6.1.0"
-else
-    SAMPLE_DATA_VERSION="1.9.1.0"	
-fi
+#if [ "$MAGENTO_VERSION" = "1.7.0.2" ] || [ "$MAGENTO_VERSION" = "1.8.1.0" ]
+#then
+#    SAMPLE_DATA_VERSION="1.6.1.0"
+#else
+#    SAMPLE_DATA_VERSION="1.9.1.0"	
+#fi
 if [ "$MYSQL_DB" = "" ]; then
     MYSQL_DB="magento_$MAGENTO_VERSION"
 fi
+if [ "$MYSQL_USER" = "" ]; then
+    MYSQL_USER="root"
+fi
 
 # check params
-MAGENTO_VERSIONS=( "1.7.0.2" "1.8.1.0" "1.9.1.0" )
-found=0
-for i in "${MAGENTO_VERSIONS[@]}"
-do
-    if [ "$i" = "$MAGENTO_VERSION" ]; then
-       found=1
-       break
-    fi
-done
-if [ $found = 0 ]; then
-    echo "[ERR] Invalid magento version. Please use one of the following: ${MAGENTO_VERSIONS[*]}"
+#MAGENTO_VERSIONS=( "1.7.0.2" "1.8.1.0" "1.9.1.0" )
+#found=0
+#for i in "${MAGENTO_VERSIONS[@]}"
+#do
+#    if [ "$i" = "$MAGENTO_VERSION" ]; then
+#       found=1
+#       break
+#    fi
+#done
+#if [ $found = 0 ]; then
+#    echo "[ERR] Invalid magento version. Please use one of the following: ${MAGENTO_VERSIONS[*]}"
+#    exit 1
+#fi
+if [ "$MAGEID" = "" ]; then
+    echo "Please provide a MAGEID."
+    exit 1
+fi
+if [ "$MAGETOKEN" = "" ]; then
+    echo "Please provide a MAGETOKEN."
     exit 1
 fi
 ADMIN_PWD_LEN=$(echo ${#ADMIN_PWD})
@@ -159,19 +178,21 @@ fi
 
 # init other variables used in this script
 MYSQL_HOST="localhost"
-MYSQL_USER="root"
 
-echo "[INFO] MySQL root pwd: $MYSQL_PWD"
+echo "[INFO] MAGEID: $MAGEID"
+echo "[INFO] MAGETOKEN: $MAGETOKEN"
+echo "[INFO] MySQL pwd: $MYSQL_PWD"
 echo "[INFO] Magento version: $MAGENTO_VERSION"
 echo "[INFO] Magento sample data version: $SAMPLE_DATA_VERSION"
 echo "[INFO] Magento db: $MYSQL_DB"
+echo "[INFO] Magento db user: $MYSQL_USER"
 echo "[INFO] Magento store url: $STORE_URL"
 echo "[INFO] Magento backend admin firstname: $ADMIN_FIRSTNAME"
 echo "[INFO] Magento backend admin lastname: $ADMIN_LASTNAME"
 echo "[INFO] Magento backend admin email: $ADMIN_EMAIL"
 echo "[INFO] Magento backend admin username: $ADMIN_USERNAME"
 echo "[INFO] Magento backend admin pwd: $ADMIN_PWD"
-
+exit
 # add repo for libapache2-mod-fastcgi
 echo -e "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -cs) restricted multiverse\ndeb-src http://archive.ubuntu.com/ubuntu $(lsb_release -cs) restricted multiverse" | sudo tee -a /etc/apt/sources.list > /dev/null
 apt-get update

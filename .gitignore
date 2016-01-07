@@ -248,3 +248,4 @@ media/*
 
 ### Vagrant ###
 .vagrant/
+Vagrant.config.yml

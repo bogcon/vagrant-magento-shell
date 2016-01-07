@@ -1,0 +1,19 @@
+ip: "192.168.33.10"
+vm:
+  ubuntu_arch: 64
+  memory: 1024
+magento_account:
+  mageid:
+  token:
+mysql:
+  db: "magentodev"
+  user: "root"
+  pass: "123"
+magento_installation:
+  version: "1.9.2.2"
+  store_url: "http://magento.dev/"
+  admin_firstname: "John"
+  admin_lastname: "Doe"
+  admin_email: "johndoe@example.com"
+  admin_username: "admin"
+  admin_pass: "admin123"
