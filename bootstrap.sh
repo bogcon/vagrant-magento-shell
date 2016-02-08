@@ -4,7 +4,7 @@
 ## Shell provisioner script for initializing Magento development environment.
 ##
 ## @author    Bogdan Constantinescu <bog_con@yahoo.com>
-## @copyright (c) 2015 Bogdan Constantinescu
+## @copyright (c) 2015-2016 Bogdan Constantinescu
 ## @license   New BSD License (http://opensource.org/licenses/BSD-3-Clause)
 ## @link      Github https://github.com/bogcon/vagrant-magento-shell
 ####
@@ -12,7 +12,7 @@
 
 
 # read params
-while getopts ":p:s:v:w:f:l:a:e:b:d:h:u:m:t:" opt; do
+while getopts ":p:s:v:w:f:l:a:e:b:d:h:u:m:t:g:" opt; do
   case $opt in
     p) MYSQL_PWD="$OPTARG"
     ;;
@@ -45,6 +45,8 @@ while getopts ":p:s:v:w:f:l:a:e:b:d:h:u:m:t:" opt; do
     ;;
     t) MAGETOKEN="$OPTARG";
     ;;
+    g) HOST_PATH="$OPTARG";
+    ;;
     h)
         bold=`tput bold`
         normal=`tput sgr0`
@@ -54,7 +56,7 @@ ${bold}DESCRIPTION${normal}
     Features:
         Apache + PHP-FPM
         MySQL + phpMyAdmin
-        Magento CE 1.9.2.2 + sample data
+        Magento CE 1.9.x + sample data
         git, vim, curl, different usefull php extensions
         nice shell renderer
 
@@ -64,7 +66,7 @@ ${bold}SYNOPSYS${normal}
                           [-l <mage_admin_lastname>] [-e <mage_admin_email>]
                           [-a <mage_admin_username>] [-b <mage_admin_password>]
                           [-d <database_name>] [-u <db_user>] [-p <db_pass>]
-                          -m <mageid> -t <token>
+                          [-g <guest_path>] -m <mageid> -t <token>
                           [-h]
 
 ${bold}OPTIONS${normal}
@@ -72,13 +74,14 @@ ${bold}OPTIONS${normal}
     -u    MySQL 's user; default is "root".
     -v    Apache virtual server name; default is "magento.dev".
     -s    Magento 's url; default is "http://magento.dev/".
-    -w    Magento CE version to install. Default is "1.9.2.2".
+    -w    Magento CE version to install. Default is "1.9.2.3".
     -f    Magento admin 's firstname; default is "John".
     -l    Magento admin 's lastname; default is "Doe".
     -e    Magento admin 's email; default is "admin@example.com".
     -a    Magento admin 's username; default is "admin".
     -b    Magento admin 's password; default is "demopassword123".
     -d    MySQL database name. Default is "magento_{version}"
+    -g    Host path. Path to symlink to html dir (example: your magento project)
     -m    Magento ID. Required. See http://magento.stackexchange.com/a/58031
     -t    Magento token. Required. See http://magento.stackexchange.com/a/58031
     -h    Prints this help.
@@ -118,7 +121,7 @@ if [ "$VIRTUAL_HOSTNAME" = "" ]; then
     VIRTUAL_HOSTNAME="magento.dev"
 fi
 if [ "$MAGENTO_VERSION" = "" ]; then
-    MAGENTO_VERSION="1.9.2.2"
+    MAGENTO_VERSION="1.9.2.3"
 fi
 if [ "$ADMIN_FIRSTNAME" = "" ]; then
     ADMIN_FIRSTNAME="John"
@@ -135,12 +138,6 @@ fi
 if [ "$ADMIN_PWD" = "" ]; then
     ADMIN_PWD="demopassword123"
 fi
-#if [ "$MAGENTO_VERSION" = "1.7.0.2" ] || [ "$MAGENTO_VERSION" = "1.8.1.0" ]
-#then
-#    SAMPLE_DATA_VERSION="1.6.1.0"
-#else
-#    SAMPLE_DATA_VERSION="1.9.1.0"	
-#fi
 if [ "$MYSQL_DB" = "" ]; then
     MYSQL_DB="magento_$MAGENTO_VERSION"
 fi
@@ -149,19 +146,6 @@ if [ "$MYSQL_USER" = "" ]; then
 fi
 
 # check params
-#MAGENTO_VERSIONS=( "1.7.0.2" "1.8.1.0" "1.9.1.0" )
-#found=0
-#for i in "${MAGENTO_VERSIONS[@]}"
-#do
-#    if [ "$i" = "$MAGENTO_VERSION" ]; then
-#       found=1
-#       break
-#    fi
-#done
-#if [ $found = 0 ]; then
-#    echo "[ERR] Invalid magento version. Please use one of the following: ${MAGENTO_VERSIONS[*]}"
-#    exit 1
-#fi
 if [ "$MAGEID" = "" ]; then
     echo "Please provide a MAGEID."
     exit 1
@@ -169,6 +153,9 @@ fi
 if [ "$MAGETOKEN" = "" ]; then
     echo "Please provide a MAGETOKEN."
     exit 1
+fi
+if [ "$HOST_PATH" = "" ]; then
+   echo "Please provide the host path to your magento project."
 fi
 ADMIN_PWD_LEN=$(echo ${#ADMIN_PWD})
 if [ $ADMIN_PWD_LEN -lt 7 ]; then
@@ -192,7 +179,7 @@ echo "[INFO] Magento backend admin lastname: $ADMIN_LASTNAME"
 echo "[INFO] Magento backend admin email: $ADMIN_EMAIL"
 echo "[INFO] Magento backend admin username: $ADMIN_USERNAME"
 echo "[INFO] Magento backend admin pwd: $ADMIN_PWD"
-exit
+
 # add repo for libapache2-mod-fastcgi
 echo -e "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -cs) restricted multiverse\ndeb-src http://archive.ubuntu.com/ubuntu $(lsb_release -cs) restricted multiverse" | sudo tee -a /etc/apt/sources.list > /dev/null
 apt-get update
@@ -223,8 +210,8 @@ php5enmod mcrypt
 
 # install MySQL
 apt-get install -y debconf-utils # utils for passing default values to packages when installing
-echo mysql-server-5.5 mysql-server/root_password password $MYSQL_PWD | debconf-set-selections
-echo mysql-server-5.5 mysql-server/root_password_again password $MYSQL_PWD | debconf-set-selections
+echo mysql-server-5.6 mysql-server/root_password password $MYSQL_PWD | debconf-set-selections
+echo mysql-server-5.6 mysql-server/root_password_again password $MYSQL_PWD | debconf-set-selections
 apt-get install -y mysql-common mysql-server mysql-client 
 
 # install phpMyAdmin, it will be available at http://host[:port]/phpmyadmin
@@ -305,7 +292,7 @@ if ! [ -L "$WWW_DIR" ]; then
     if [ -d "$WWW_DIR" ]; then
     	rm -rf "$WWW_DIR"
     fi
-    ln -fs /vagrant "$WWW_DIR"
+    ln -fs $HOST_PATH $WWW_DIR
 fi
 
 # download magento and extract files
@@ -313,30 +300,23 @@ cd $WWW_DIR
 if [ ! -f app/Mage.php ]; then
     echo "[INFO] Downloading magento data..."
     if [ ! -f magento-$MAGENTO_VERSION.tar.gz ]; then 
-        wget "http://www.magentocommerce.com/downloads/assets/$MAGENTO_VERSION/magento-$MAGENTO_VERSION.tar.gz"
+        curl -O "https://$MAGEID:$MAGETOKEN@www.magentocommerce.com/products/downloads/file/magento-$MAGENTO_VERSION.tar.gz"
     fi
-    tar -zxvf magento-$MAGENTO_VERSION.tar.gz
-
-    if [ ! -f magento-sample-data-$SAMPLE_DATA_VERSION.tar.gz ]; then 
-        wget "http://www.magentocommerce.com/downloads/assets/$SAMPLE_DATA_VERSION/magento-sample-data-$SAMPLE_DATA_VERSION.tar.gz"
+    tar -zxf magento-$MAGENTO_VERSION.tar.gz
+    if [ $MAGENTO_VERSION = "1.9.2.3" ]; then
+    	TAR_ROOT_PATH="./magento"
+    else
+ 	TAR_ROOT_PATH="./"
     fi
-    tar -zxvf magento-sample-data-$SAMPLE_DATA_VERSION.tar.gz
-    cp -R magento-sample-data-$SAMPLE_DATA_VERSION/media/* magento/media/
-    if [ "1.9.1.0" = "$MAGENTO_VERSION" ]; then
-        cp -R magento-sample-data-$SAMPLE_DATA_VERSION/skin/* magento/skin/
+    if [ ! -f compressed-magento-sample-data-1.9.1.0.tgz ]; then 
+        curl -O "https://raw.githubusercontent.com/Vinai/compressed-magento-sample-data/1.9.1.0/compressed-magento-sample-data-1.9.1.0.tgz"
     fi
-    mv magento-sample-data-$SAMPLE_DATA_VERSION/magento_sample_data_for_$SAMPLE_DATA_VERSION.sql magento/data.sql
-    cp -R magento/* magento/.htaccess* .
-
-    if [ "1.7.0.2" = "$MAGENTO_VERSION" ]; then # apply PHP 5.4 patch
-        if [ ! -f PATCH_SUPEE-2629_EE_1.12.0.0_v1.sh ]; then
-            wget http://www.magentocommerce.com/downloads/assets/ce_patches/PATCH_SUPEE-2629_EE_1.12.0.0_v1.sh
-        fi
-        sh PATCH_SUPEE-2629_EE_1.12.0.0_v1.sh
-        rm PATCH_SUPEE-2629_EE_1.12.0.0_v1.sh
-        if [ -f "0" ]; then
-            rm "0"
-        fi
+    tar -zxf compressed-magento-sample-data-1.9.1.0.tgz
+    cp -R magento-sample-data-1.9.1.0/media/* $TAR_ROOT_PATH/media/
+    cp -R magento-sample-data-1.9.1.0/skin/* $TAR_ROOT_PATH/skin/
+    mv magento-sample-data-1.9.1.0/magento_sample_data_for_1.9.1.0.sql ./data.sql
+    if [ $MAGENTO_VERSION = "1.9.2.3" ]; then
+        cp -R magento/* magento/.htaccess* .    
     fi
 
     # create magento db and import sample data into it
@@ -346,7 +326,10 @@ if [ ! -f app/Mage.php ]; then
     mysql -u $MYSQL_USER -h $MYSQL_HOST -p$MYSQL_PWD $MYSQL_DB < data.sql
 
     # remove unnecessary files
-    rm -rf magento/ magento-sample-data-$SAMPLE_DATA_VERSION/  data.sql magento-$MAGENTO_VERSION.tar.gz magento-sample-data-$SAMPLE_DATA_VERSION.tar.gz
+    #rm -rf magento-sample-data-1.9.1.0/  data.sql magento-$MAGENTO_VERSION.tar.gz compressed-magento-sample-data-1.9.1.0.tgz
+    if [ $MAGENTO_VERSION = "1.9.2.3" ]; then
+        rm -rf magento/ 
+    fi
 else
     echo "[INFO] Magento already downloaded."
 fi

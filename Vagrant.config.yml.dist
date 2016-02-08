@@ -2,6 +2,9 @@ ip: "192.168.33.10"
 vm:
   ubuntu_arch: 64
   memory: 1024
+synced_folder:
+  host_path:
+  guest_path: "/home/vagrant/magento-project"
 magento_account:
   mageid:
   token:
@@ -10,7 +13,7 @@ mysql:
   user: "root"
   pass: "123"
 magento_installation:
-  version: "1.9.2.2"
+  version: "1.9.2.3"
   store_url: "http://magento.dev/"
   admin_firstname: "John"
   admin_lastname: "Doe"
