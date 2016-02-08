@@ -326,7 +326,7 @@ if [ ! -f app/Mage.php ]; then
     mysql -u $MYSQL_USER -h $MYSQL_HOST -p$MYSQL_PWD $MYSQL_DB < data.sql
 
     # remove unnecessary files
-    #rm -rf magento-sample-data-1.9.1.0/  data.sql magento-$MAGENTO_VERSION.tar.gz compressed-magento-sample-data-1.9.1.0.tgz
+    rm -rf magento-sample-data-1.9.1.0/  data.sql magento-$MAGENTO_VERSION.tar.gz compressed-magento-sample-data-1.9.1.0.tgz
     if [ $MAGENTO_VERSION = "1.9.2.3" ]; then
         rm -rf magento/ 
     fi
